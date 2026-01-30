@@ -2,9 +2,10 @@
  * 自定义预填充扩展 for SillyTavern
  * 
  * 这是一个 SillyTavern (酒馆) 扩展，为多种 LLM 模型自动添加预填充 (Prefill) 属性。
+ * 支持额外属性注入（如 Kimi 的 name 字段）和可选的变量替换。
  * 
  * @author Fabulous
- * @version 2.0.0
+ * @version 2.1.0
  */
 
 const multiPrefill = {
@@ -20,6 +21,7 @@ const multiPrefill = {
     oai_settings: null,
     chat_completion_sources: null,
     getChatCompletionModel: null,
+    getContext: null,
 
     // Preset rules for known providers
     PRESET_RULES: [
@@ -30,6 +32,7 @@ const multiPrefill = {
             modelPattern: "deepseek",
             prefillProperty: "prefix",
             prefillValue: true,
+            extraProperties: {},
             priority: 10
         },
         {
@@ -39,7 +42,21 @@ const multiPrefill = {
             modelPattern: "kimi|moonshot",
             prefillProperty: "partial",
             prefillValue: true,
+            extraProperties: {},
             priority: 10
+        },
+        {
+            id: "kimi-roleplay",
+            name: "Kimi 角色扮演",
+            enabled: false,
+            modelPattern: "kimi|moonshot",
+            prefillProperty: "partial",
+            prefillValue: true,
+            extraProperties: {
+                "name": "{{char}}"
+            },
+            useVariables: true,
+            priority: 5
         }
     ],
 
@@ -47,6 +64,7 @@ const multiPrefill = {
     defaultSettings: {
         globalEnabled: true,
         onlyForCustomSource: true,
+        enableVariableSubstitution: false,  // 变量替换默认关闭
         rules: null,  // Will be initialized from PRESET_RULES
         logEnabled: false
     },
@@ -72,6 +90,14 @@ const multiPrefill = {
                 this.extension_settings[this.EXTENSION_NAME].rules = JSON.parse(JSON.stringify(this.PRESET_RULES));
             }
 
+            // Migration: add extraProperties to existing rules if missing
+            const rules = this.extension_settings[this.EXTENSION_NAME].rules;
+            rules.forEach(rule => {
+                if (!rule.extraProperties) {
+                    rule.extraProperties = {};
+                }
+            });
+
             this.debugLog('Settings initialized:', this.extension_settings[this.EXTENSION_NAME]);
         } catch (e) {
             console.error('[multi-prefill] initializeSettings error:', e);
@@ -90,11 +116,47 @@ const multiPrefill = {
         return settings.rules || this.PRESET_RULES;
     },
 
+    /**
+     * Replace SillyTavern variables in a string
+     * Supports: {{char}}, {{user}}, {{persona}}
+     */
+    replaceVariables: function (str) {
+        if (!str || typeof str !== 'string') return str;
+
+        try {
+            const context = this.getContext ? this.getContext() : null;
+            if (!context) return str;
+
+            let result = str;
+
+            // {{char}} - Character name
+            if (context.name2) {
+                result = result.replace(/\{\{char\}\}/gi, context.name2);
+            }
+
+            // {{user}} - User name
+            if (context.name1) {
+                result = result.replace(/\{\{user\}\}/gi, context.name1);
+            }
+
+            // {{persona}} - Also user name
+            if (context.name1) {
+                result = result.replace(/\{\{persona\}\}/gi, context.name1);
+            }
+
+            return result;
+        } catch (e) {
+            this.debugLog('Variable replacement error:', e);
+            return str;
+        }
+    },
+
     updateSettingsUI: function () {
         const settings = this.getSettings();
 
         jQuery('#multi_prefill_enabled').prop('checked', settings.globalEnabled);
         jQuery('#multi_prefill_custom_only').prop('checked', settings.onlyForCustomSource);
+        jQuery('#multi_prefill_variables').prop('checked', settings.enableVariableSubstitution);
         jQuery('#multi_prefill_log').prop('checked', settings.logEnabled);
 
         this.renderRulesList();
@@ -111,6 +173,20 @@ const multiPrefill = {
         }
 
         rules.forEach((rule, index) => {
+            // Format extra properties for display
+            let extraPropsDisplay = '';
+            if (rule.extraProperties && Object.keys(rule.extraProperties).length > 0) {
+                const propsStr = Object.entries(rule.extraProperties)
+                    .map(([k, v]) => `${k}: "${v}"`)
+                    .join(', ');
+                extraPropsDisplay = `
+                    <div class="rule-detail">
+                        <span class="label">额外属性:</span>
+                        <code>${this.escapeHtml(propsStr)}</code>
+                    </div>
+                `;
+            }
+
             const ruleHtml = `
                 <div class="prefill-rule ${rule.enabled ? '' : 'disabled'}" data-index="${index}">
                     <div class="rule-header">
@@ -118,9 +194,14 @@ const multiPrefill = {
                             <input type="checkbox" class="rule-enabled" ${rule.enabled ? 'checked' : ''}>
                             <span class="rule-name">${this.escapeHtml(rule.name)}</span>
                         </label>
-                        <button class="rule-delete menu_button" title="删除">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                        <div class="rule-actions">
+                            <button class="rule-edit menu_button" title="编辑">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button class="rule-delete menu_button" title="删除">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="rule-details">
                         <div class="rule-detail">
@@ -128,9 +209,10 @@ const multiPrefill = {
                             <code>${this.escapeHtml(rule.modelPattern)}</code>
                         </div>
                         <div class="rule-detail">
-                            <span class="label">属性:</span>
+                            <span class="label">预填充:</span>
                             <code>${this.escapeHtml(rule.prefillProperty)}: ${JSON.stringify(rule.prefillValue)}</code>
                         </div>
+                        ${extraPropsDisplay}
                     </div>
                 </div>
             `;
@@ -164,6 +246,13 @@ const multiPrefill = {
             if (self.saveSettingsDebounced) self.saveSettingsDebounced();
         });
 
+        // Variable substitution toggle
+        jQuery('#multi_prefill_variables').on('change', function () {
+            const settings = self.getSettings();
+            settings.enableVariableSubstitution = jQuery(this).prop('checked');
+            if (self.saveSettingsDebounced) self.saveSettingsDebounced();
+        });
+
         // Debug log toggle
         jQuery('#multi_prefill_log').on('change', function () {
             const settings = self.getSettings();
@@ -180,6 +269,10 @@ const multiPrefill = {
             self.addPresetRule('kimi');
         });
 
+        jQuery('#add_kimi_roleplay_rule').on('click', function () {
+            self.addPresetRule('kimi-roleplay');
+        });
+
         jQuery('#add_custom_rule').on('click', function () {
             self.showAddRuleDialog();
         });
@@ -193,6 +286,11 @@ const multiPrefill = {
                 if (self.saveSettingsDebounced) self.saveSettingsDebounced();
                 self.renderRulesList();
             }
+        });
+
+        jQuery('#multi_prefill_rules_list').on('click', '.rule-edit', function () {
+            const index = jQuery(this).closest('.prefill-rule').data('index');
+            self.showEditRuleDialog(index);
         });
 
         jQuery('#multi_prefill_rules_list').on('click', '.rule-delete', function () {
@@ -220,33 +318,68 @@ const multiPrefill = {
     },
 
     showAddRuleDialog: function () {
+        this.showRuleDialog(null);
+    },
+
+    showEditRuleDialog: function (index) {
+        const rules = this.getRules();
+        if (index >= 0 && index < rules.length) {
+            this.showRuleDialog(rules[index], index);
+        }
+    },
+
+    showRuleDialog: function (existingRule, index) {
         const self = this;
+        const isEdit = existingRule !== null;
+        const rule = existingRule || {};
+
+        // Format extra properties for display
+        let extraPropsStr = '';
+        if (rule.extraProperties && Object.keys(rule.extraProperties).length > 0) {
+            extraPropsStr = JSON.stringify(rule.extraProperties, null, 2);
+        }
+
         const html = `
             <div class="add-rule-dialog">
                 <div class="form-group">
-                    <label>规则名称</label>
-                    <input type="text" id="new_rule_name" class="text_pole" placeholder="例如: GLM">
+                    <label>规则名称 <span class="required">*</span></label>
+                    <input type="text" id="new_rule_name" class="text_pole" value="${this.escapeHtml(rule.name || '')}" placeholder="例如: GLM">
                 </div>
                 <div class="form-group">
-                    <label>模型匹配 (正则)</label>
-                    <input type="text" id="new_rule_pattern" class="text_pole" placeholder="例如: glm|chatglm">
+                    <label>模型匹配 (正则) <span class="required">*</span></label>
+                    <input type="text" id="new_rule_pattern" class="text_pole" value="${this.escapeHtml(rule.modelPattern || '')}" placeholder="例如: glm|chatglm">
                 </div>
                 <div class="form-group">
-                    <label>预填充属性名</label>
-                    <input type="text" id="new_rule_property" class="text_pole" value="prefix" placeholder="例如: prefix 或 partial">
+                    <label>预填充属性名 <span class="required">*</span></label>
+                    <input type="text" id="new_rule_property" class="text_pole" value="${this.escapeHtml(rule.prefillProperty || 'prefix')}" placeholder="例如: prefix 或 partial">
                 </div>
                 <div class="form-group">
                     <label>预填充值</label>
                     <select id="new_rule_value" class="text_pole">
-                        <option value="true">true (布尔)</option>
-                        <option value="false">false (布尔)</option>
+                        <option value="true" ${rule.prefillValue === true ? 'selected' : ''}>true (布尔)</option>
+                        <option value="false" ${rule.prefillValue === false ? 'selected' : ''}>false (布尔)</option>
                     </select>
+                </div>
+                <hr>
+                <div class="form-group">
+                    <label>额外属性 (JSON 格式，可选)</label>
+                    <textarea id="new_rule_extra" class="text_pole" rows="3" placeholder='{"name": "角色名"}'>${this.escapeHtml(extraPropsStr)}</textarea>
+                    <small>支持变量: {{char}} = 角色名, {{user}} = 用户名</small>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox_label">
+                        <input type="checkbox" id="new_rule_use_vars" ${rule.useVariables ? 'checked' : ''}>
+                        <span>对此规则启用变量替换</span>
+                    </label>
                 </div>
             </div>
         `;
 
-        callGenericPopup(html, POPUP_TYPE.CONFIRM, '添加自定义规则', {
-            okButton: '添加',
+        const title = isEdit ? `编辑规则: ${rule.name}` : '添加自定义规则';
+        const okButton = isEdit ? '保存' : '添加';
+
+        callGenericPopup(html, POPUP_TYPE.CONFIRM, title, {
+            okButton: okButton,
             cancelButton: '取消',
             wide: false,
             large: false,
@@ -256,27 +389,49 @@ const multiPrefill = {
                 const pattern = jQuery('#new_rule_pattern').val().trim();
                 const property = jQuery('#new_rule_property').val().trim();
                 const valueStr = jQuery('#new_rule_value').val();
+                const extraStr = jQuery('#new_rule_extra').val().trim();
+                const useVars = jQuery('#new_rule_use_vars').prop('checked');
 
                 if (!name || !pattern || !property) {
                     toastr.error('请填写所有必填项');
                     return;
                 }
 
+                // Parse extra properties
+                let extraProperties = {};
+                if (extraStr) {
+                    try {
+                        extraProperties = JSON.parse(extraStr);
+                    } catch (e) {
+                        toastr.error('额外属性 JSON 格式错误');
+                        return;
+                    }
+                }
+
                 const newRule = {
-                    id: 'custom_' + Date.now(),
+                    id: isEdit ? rule.id : ('custom_' + Date.now()),
                     name: name,
-                    enabled: true,
+                    enabled: isEdit ? rule.enabled : true,
                     modelPattern: pattern,
                     prefillProperty: property,
                     prefillValue: valueStr === 'true',
-                    priority: 10
+                    extraProperties: extraProperties,
+                    useVariables: useVars,
+                    priority: rule.priority || 10
                 };
 
                 const rules = self.getRules();
-                rules.push(newRule);
+
+                if (isEdit) {
+                    rules[index] = newRule;
+                    toastr.success(`已更新 ${name} 规则`);
+                } else {
+                    rules.push(newRule);
+                    toastr.success(`已添加 ${name} 规则`);
+                }
+
                 if (self.saveSettingsDebounced) self.saveSettingsDebounced();
                 self.renderRulesList();
-                toastr.success(`已添加 ${name} 规则`);
             }
         });
     },
@@ -367,13 +522,32 @@ const multiPrefill = {
         const lastMessage = messages[messages.length - 1];
 
         if (lastMessage.role === 'assistant') {
-            // Check if it already has the property set
+            // Apply main prefill property
             if (!lastMessage[rule.prefillProperty]) {
                 lastMessage[rule.prefillProperty] = rule.prefillValue;
-
                 this.debugLog(`Applied "${rule.name}" rule: ${rule.prefillProperty} = ${rule.prefillValue}`);
-                this.debugLog('Message content:', String(lastMessage.content || '').substring(0, 100) + '...');
             }
+
+            // Apply extra properties
+            if (rule.extraProperties && Object.keys(rule.extraProperties).length > 0) {
+                const shouldReplaceVars = settings.enableVariableSubstitution && rule.useVariables;
+
+                for (const [key, value] of Object.entries(rule.extraProperties)) {
+                    if (!lastMessage[key]) {
+                        let finalValue = value;
+
+                        // Apply variable substitution if enabled
+                        if (shouldReplaceVars && typeof value === 'string') {
+                            finalValue = this.replaceVariables(value);
+                        }
+
+                        lastMessage[key] = finalValue;
+                        this.debugLog(`Applied extra property: ${key} = "${finalValue}"`);
+                    }
+                }
+            }
+
+            this.debugLog('Message content:', String(lastMessage.content || '').substring(0, 100) + '...');
         }
     },
 
@@ -389,6 +563,7 @@ const multiPrefill = {
             self.saveSettingsDebounced = mod.saveSettingsDebounced;
             self.eventSource = mod.eventSource;
             self.event_types = mod.event_types;
+            self.getContext = mod.getContext;
 
             // Try to get callGenericPopup for dialogs
             if (typeof callGenericPopup === 'undefined') {
