@@ -1,47 +1,180 @@
-/* DeepSeek Prefill Extension Styles */
+/* Multi-Prefill Extension Styles */
 
-.deepseek_prefill_settings {
+.multi_prefill_settings {
     margin-bottom: 10px;
 }
 
-.deepseek_prefill_settings .inline-drawer-content {
+.multi_prefill_settings .inline-drawer-content {
     padding: 10px;
 }
 
-.deepseek_prefill_block {
-    margin-bottom: 10px;
+.multi_prefill_block {
+    margin-bottom: 12px;
 }
 
-.deepseek_prefill_block label {
+.multi_prefill_block label {
     display: block;
     margin-bottom: 5px;
 }
 
-.deepseek_prefill_block small {
+.multi_prefill_block small {
     display: block;
     opacity: 0.7;
     margin-top: 2px;
+    font-size: 0.85em;
 }
 
-.deepseek_prefill_block .text_pole {
+.multi_prefill_block .text_pole {
     width: 100%;
 }
 
-.deepseek_prefill_info {
-    padding: 8px;
+/* Rules section */
+.rules-header {
+    margin-bottom: 10px;
+}
+
+.rules-title {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.rules-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+}
+
+.no-rules {
+    padding: 15px;
+    text-align: center;
+    opacity: 0.6;
+    font-style: italic;
+}
+
+/* Individual rule card */
+.prefill-rule {
+    background: var(--SmartThemeBlurTintColor);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 8px;
+    border: 1px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.prefill-rule:hover {
+    border-color: var(--SmartThemeBorderColor);
+}
+
+.prefill-rule.disabled {
+    opacity: 0.5;
+}
+
+.rule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.rule-name {
+    font-weight: bold;
+}
+
+.rule-delete {
+    padding: 4px 8px;
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+
+.rule-delete:hover {
+    opacity: 1;
+    color: var(--SmartThemeQuoteColor);
+}
+
+.rule-details {
+    font-size: 0.85em;
+}
+
+.rule-detail {
+    margin-bottom: 4px;
+}
+
+.rule-detail .label {
+    opacity: 0.7;
+    margin-right: 6px;
+}
+
+.rule-detail code {
+    background: var(--SmartThemeBodyColor);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+/* Action buttons */
+.rules-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.rules-actions .menu_button {
+    flex: 1;
+    min-width: 80px;
+    font-size: 0.85em;
+    padding: 6px 10px;
+}
+
+.rules-actions .menu_button i {
+    margin-right: 4px;
+}
+
+/* Info box */
+.multi_prefill_info {
+    padding: 10px;
     background-color: var(--SmartThemeBlurTintColor);
     border-radius: 5px;
     margin-top: 10px;
 }
 
-.deepseek_prefill_info code {
+.multi_prefill_info code {
     background-color: var(--SmartThemeBodyColor);
     padding: 2px 5px;
     border-radius: 3px;
     font-family: monospace;
 }
 
-.deepseek_prefill_info i {
+.multi_prefill_info i {
     color: var(--SmartThemeQuoteColor);
     margin-right: 5px;
+}
+
+.multi_prefill_info ul {
+    margin: 8px 0 0 20px;
+    padding: 0;
+}
+
+.multi_prefill_info li {
+    margin-bottom: 4px;
+}
+
+/* Add rule dialog */
+.add-rule-dialog {
+    padding: 10px;
+}
+
+.add-rule-dialog .form-group {
+    margin-bottom: 12px;
+}
+
+.add-rule-dialog label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+
+.add-rule-dialog .text_pole {
+    width: 100%;
 }

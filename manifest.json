@@ -1,10 +1,11 @@
 {
-    "display_name": "DeepSeek Prefill",
-    "version": "1.0.0",
+    "display_name": "Multi-Prefill",
+    "version": "2.0.0",
     "author": "Fabulous",
     "js": "index.js",
     "css": "style.css",
     "loading_order": 100,
-    "homePage": "https://github.com/MapleFu",
-    "auto_update": false
+    "homePage": "https://github.com/Fabulous",
+    "auto_update": false,
+    "description": "为多种模型自动添加预填充属性 (DeepSeek: prefix, Kimi: partial 等)"
 }

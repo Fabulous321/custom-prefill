@@ -1,53 +1,82 @@
-# DeepSeek Prefill 扩展
+# Multi-Prefill 多模型预填充扩展
 
-这是一个 SillyTavern (酒馆) 扩展，旨在为 DeepSeek 的 prefill (前缀補全) 功能自动添加 `prefix: true` 标记。
+这是一个 SillyTavern (酒馆) 扩展，为多种 LLM 模型自动添加预填充 (Prefill) 属性。
 
-## 功能介绍
+## ✨ 功能特性
 
-当你使用 **Custom API (自定义 API)** 源连接到 DeepSeek 兼容端点（如官方的 `/beta` API 或各类中转）时，此扩展会自动在请求 payload 的最后一条 assistant 消息中注入 `prefix: true` 标记。这使得模型能够无缝地从已有内容继续生成，而不是启动一个全新的响应。
+- **自动识别模型**：根据当前请求的模型名称自动匹配对应的预填充规则
+- **多模型支持**：内置 DeepSeek 和 Kimi 预设，支持添加自定义规则
+- **可视化管理**：在酒馆设置面板中直接管理所有规则
+- **灵活配置**：支持自定义属性名、值和正则匹配模式
 
-## 适用场景
+## 📦 支持的模型
 
-- **直接使用酒馆内置的 DeepSeek 源**：❌ **不需要**。SillyTavern 原生代码已经处理了此逻辑。
-- **使用 Custom API 连接 DeepSeek 官方 URL**：✅ **需要**。Custom 渠道默认不会添加 prefix 标记。
-- **使用 OpenAI 兼容的代理/中转连接 DeepSeek**：✅ **非常有帮助**。
+| 模型/厂商 | 预填充属性 | 匹配模式 |
+|-----------|------------|----------|
+| DeepSeek | `prefix: true` | `deepseek` |
+| Kimi (月之暗面) | `partial: true` | `kimi\|moonshot` |
+| 自定义 | 用户配置 | 用户配置 |
 
-## 安装方法
+## 🚀 安装方法
 
-### 方法 1：手动安装
-
-将此文件夹复制到你的 SillyTavern 目录下的以下位置：
+将此文件夹复制到 SillyTavern 的第三方扩展目录：
 
 ```
-SillyTavern/public/scripts/extensions/third-party/deepseek-prefill/
+SillyTavern/public/scripts/extensions/third-party/custom message/
 ```
 
-### 方法 2：软连接（开发用途）
+或者使用其他目录名（需同步修改 `index.js` 中的 `EXTENSION_FOLDER_PATH`）。
 
-从你的开发目录链接到酒馆的扩展目录。
+## ⚙️ 配置说明
 
-## 配置选项
+安装并重启酒馆后，在 **扩展 (Extensions)** 面板中找到 **多模型预填充 (Multi-Prefill)**：
 
-安装并重启酒馆后，在 **扩展 (Extensions)** 面板中找到 **DeepSeek Prefill**：
+### 全局选项
 
 | 设置项 | 说明 |
-|---------|-------------|
-| **启用 DeepSeek Prefill** | 扩展的总开关 |
-| **仅对 Custom API 源生效** | 建议开启，避免干扰其他 API (如 OpenAI) |
-| **模型匹配模式 (正则)** | 仅当模型名匹配该正则时生效（例如：`deepseek`）。留空则匹配所有模型 |
-| **启用调试日志** | 在浏览器控制台中打印处理详情，方便排查问题 |
+|--------|------|
+| **启用多模型预填充** | 扩展总开关 |
+| **仅对 Custom API 源生效** | 建议开启，避免干扰其他已内置预填充支持的 API |
+| **启用调试日志** | 在浏览器控制台打印匹配和注入详情 |
 
-## 工作原理
+### 规则管理
 
-扩展通过监听 `CHAT_COMPLETION_PROMPT_READY` 事件（该事件在酒馆发送 API 请求前触发）来拦截并修改消息数组。如果满足过滤条件，它会将 messages 数组中最后一条辅助信息 (assistant) 的 `prefix` 属性设为 `true`。
+- **添加预设规则**：点击 "DeepSeek" 或 "Kimi" 按钮快速添加
+- **添加自定义规则**：点击 "自定义" 按钮，填写：
+  - 规则名称（显示用）
+  - 模型匹配正则（如 `glm|chatglm`）
+  - 预填充属性名（如 `prefix`）
+  - 预填充值（如 `true`）
+- **启用/禁用规则**：勾选或取消勾选规则前的复选框
+- **删除规则**：点击规则右侧的删除按钮
 
-## 技术背景
+## 🔧 工作原理
 
-`prefix: true` 标志告诉 DeepSeek API：最后一条 assistant 消息是“预填内容”——模型应该在此内容的基础上继续生成。这在以下情况非常有用：
+1. 扩展监听 `CHAT_COMPLETION_PROMPT_READY` 事件
+2. 通过 `getChatCompletionModel()` 获取当前请求的模型名称
+3. 按优先级遍历所有启用的规则，找到首个匹配的规则
+4. 将规则中的属性注入到最后一条 assistant 消息中
 
-- 继续被意外中断的对话
-- 引导模型的输出风格/开头
-- 多轮推理模式
+## 📝 技术背景
+
+不同 LLM 厂商使用不同的预填充标记：
+
+- **DeepSeek**：使用 `prefix: true` 告诉 API 继续生成而非重新开始
+- **Kimi (月之暗面)**：使用 `partial: true` 实现类似功能
+- **Claude**：使用 assistant 消息直接预填充（酒馆已原生支持）
+
+## 📜 更新日志
+
+### v2.0.0
+
+- 🎉 支持多模型自动匹配
+- ✨ 新增 Kimi (月之暗面) 预设
+- 🎨 全新的规则管理界面
+- 🔧 使用 `getChatCompletionModel()` 获取模型名
+
+### v1.0.0
+
+- 初始版本，仅支持 DeepSeek
 
 ## 授权协议
 
