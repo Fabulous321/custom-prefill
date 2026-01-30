@@ -10,7 +10,7 @@
 
 const multiPrefill = {
     EXTENSION_NAME: "自定义预填充",
-    EXTENSION_FOLDER_PATH: "scripts/extensions/third-party/custom%20message",
+    EXTENSION_FOLDER_PATH: "scripts/extensions/third-party/custom-prefill",
     DEBUG: true,
 
     // Module references
