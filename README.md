@@ -1,4 +1,4 @@
-# 自定义预填充 (Custom Prefill) 扩展
+# 自定义预填充 (Custom Prefill)
 
 这是一个 SillyTavern (酒馆) 扩展，为多种 LLM 模型自动添加预填充 (Prefill) 属性。
 
