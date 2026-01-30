@@ -40,7 +40,7 @@
 }
 
 .rules-list {
-    max-height: 300px;
+    max-height: 350px;
     overflow-y: auto;
     margin-bottom: 10px;
 }
@@ -81,14 +81,24 @@
     font-weight: bold;
 }
 
+.rule-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.rule-edit,
 .rule-delete {
     padding: 4px 8px;
     font-size: 0.8em;
     opacity: 0.7;
 }
 
+.rule-edit:hover,
 .rule-delete:hover {
     opacity: 1;
+}
+
+.rule-delete:hover {
     color: var(--SmartThemeQuoteColor);
 }
 
@@ -116,19 +126,19 @@
 /* Action buttons */
 .rules-actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
 }
 
 .rules-actions .menu_button {
     flex: 1;
-    min-width: 80px;
-    font-size: 0.85em;
-    padding: 6px 10px;
+    min-width: 70px;
+    font-size: 0.8em;
+    padding: 5px 8px;
 }
 
 .rules-actions .menu_button i {
-    margin-right: 4px;
+    margin-right: 3px;
 }
 
 /* Info box */
@@ -160,6 +170,12 @@
     margin-bottom: 4px;
 }
 
+.multi_prefill_info .var-help {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--SmartThemeBorderColor);
+}
+
 /* Add rule dialog */
 .add-rule-dialog {
     padding: 10px;
@@ -175,6 +191,29 @@
     font-weight: bold;
 }
 
+.add-rule-dialog label .required {
+    color: var(--SmartThemeQuoteColor);
+}
+
 .add-rule-dialog .text_pole {
     width: 100%;
+}
+
+.add-rule-dialog textarea.text_pole {
+    resize: vertical;
+    min-height: 60px;
+    font-family: monospace;
+}
+
+.add-rule-dialog small {
+    display: block;
+    margin-top: 4px;
+    opacity: 0.7;
+    font-size: 0.85em;
+}
+
+.add-rule-dialog hr {
+    margin: 15px 0;
+    border: none;
+    border-top: 1px solid var(--SmartThemeBorderColor);
 }
