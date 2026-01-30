@@ -1,0 +1,47 @@
+<div class="deepseek_prefill_settings">
+    <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <b>DeepSeek Prefill</b>
+            <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <div class="deepseek_prefill_block">
+                <label class="checkbox_label">
+                    <input id="deepseek_prefill_enabled" type="checkbox" checked />
+                    <span>启用 DeepSeek Prefill</span>
+                </label>
+            </div>
+
+            <div class="deepseek_prefill_block">
+                <label class="checkbox_label">
+                    <input id="deepseek_prefill_custom_only" type="checkbox" checked />
+                    <span>仅对 Custom API 源生效</span>
+                </label>
+            </div>
+
+            <div class="deepseek_prefill_block">
+                <label for="deepseek_prefill_model_pattern">
+                    <span>模型匹配模式 (正则表达式)</span>
+                    <small>留空则对所有模型生效，例如: deepseek</small>
+                </label>
+                <input id="deepseek_prefill_model_pattern" class="text_pole" type="text" placeholder="deepseek" />
+            </div>
+
+            <div class="deepseek_prefill_block">
+                <label class="checkbox_label">
+                    <input id="deepseek_prefill_log" type="checkbox" />
+                    <span>启用调试日志</span>
+                </label>
+            </div>
+
+            <hr class="sysHR">
+            <div class="deepseek_prefill_info">
+                <small>
+                    <i class="fa-solid fa-info-circle"></i>
+                    此扩展为最后一条 assistant 消息添加 <code>prefix: true</code>，
+                    启用 DeepSeek 的 prefill 功能。仅在使用 Custom API 源连接 DeepSeek 兼容端点时需要。
+                </small>
+            </div>
+        </div>
+    </div>
+</div>

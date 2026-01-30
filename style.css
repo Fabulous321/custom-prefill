@@ -1,0 +1,47 @@
+/* DeepSeek Prefill Extension Styles */
+
+.deepseek_prefill_settings {
+    margin-bottom: 10px;
+}
+
+.deepseek_prefill_settings .inline-drawer-content {
+    padding: 10px;
+}
+
+.deepseek_prefill_block {
+    margin-bottom: 10px;
+}
+
+.deepseek_prefill_block label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.deepseek_prefill_block small {
+    display: block;
+    opacity: 0.7;
+    margin-top: 2px;
+}
+
+.deepseek_prefill_block .text_pole {
+    width: 100%;
+}
+
+.deepseek_prefill_info {
+    padding: 8px;
+    background-color: var(--SmartThemeBlurTintColor);
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.deepseek_prefill_info code {
+    background-color: var(--SmartThemeBodyColor);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: monospace;
+}
+
+.deepseek_prefill_info i {
+    color: var(--SmartThemeQuoteColor);
+    margin-right: 5px;
+}

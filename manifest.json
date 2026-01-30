@@ -1,0 +1,10 @@
+{
+    "display_name": "DeepSeek Prefill",
+    "version": "1.0.0",
+    "author": "Fabulous",
+    "js": "index.js",
+    "css": "style.css",
+    "loading_order": 100,
+    "homePage": "https://github.com/MapleFu",
+    "auto_update": false
+}
