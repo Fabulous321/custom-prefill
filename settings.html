@@ -1,45 +1,75 @@
-<div class="deepseek_prefill_settings">
+<div class="multi_prefill_settings">
     <div class="inline-drawer">
         <div class="inline-drawer-toggle inline-drawer-header">
-            <b>DeepSeek Prefill</b>
+            <b>多模型预填充 (Multi-Prefill)</b>
             <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
         </div>
         <div class="inline-drawer-content">
-            <div class="deepseek_prefill_block">
+            <!-- 全局开关 -->
+            <div class="multi_prefill_block">
                 <label class="checkbox_label">
-                    <input id="deepseek_prefill_enabled" type="checkbox" checked />
-                    <span>启用 DeepSeek Prefill</span>
+                    <input id="multi_prefill_enabled" type="checkbox" checked />
+                    <span>启用多模型预填充</span>
                 </label>
             </div>
 
-            <div class="deepseek_prefill_block">
+            <div class="multi_prefill_block">
                 <label class="checkbox_label">
-                    <input id="deepseek_prefill_custom_only" type="checkbox" checked />
+                    <input id="multi_prefill_custom_only" type="checkbox" checked />
                     <span>仅对 Custom API 源生效</span>
                 </label>
-            </div>
-
-            <div class="deepseek_prefill_block">
-                <label for="deepseek_prefill_model_pattern">
-                    <span>模型匹配模式 (正则表达式)</span>
-                    <small>留空则对所有模型生效，例如: deepseek</small>
-                </label>
-                <input id="deepseek_prefill_model_pattern" class="text_pole" type="text" placeholder="deepseek" />
-            </div>
-
-            <div class="deepseek_prefill_block">
-                <label class="checkbox_label">
-                    <input id="deepseek_prefill_log" type="checkbox" />
-                    <span>启用调试日志</span>
-                </label>
+                <small>建议开启，避免干扰其他已内置支持的 API</small>
             </div>
 
             <hr class="sysHR">
-            <div class="deepseek_prefill_info">
+
+            <!-- 规则列表 -->
+            <div class="multi_prefill_block">
+                <div class="rules-header">
+                    <span class="rules-title">预填充规则</span>
+                    <small>根据模型名称自动匹配并应用对应的预填充属性</small>
+                </div>
+
+                <div id="multi_prefill_rules_list" class="rules-list">
+                    <!-- 规则会动态渲染到这里 -->
+                </div>
+
+                <div class="rules-actions">
+                    <button id="add_deepseek_rule" class="menu_button" title="添加 DeepSeek 规则">
+                        <i class="fa-solid fa-plus"></i> DeepSeek
+                    </button>
+                    <button id="add_kimi_rule" class="menu_button" title="添加 Kimi 规则">
+                        <i class="fa-solid fa-plus"></i> Kimi
+                    </button>
+                    <button id="add_custom_rule" class="menu_button" title="添加自定义规则">
+                        <i class="fa-solid fa-plus"></i> 自定义
+                    </button>
+                </div>
+            </div>
+
+            <hr class="sysHR">
+
+            <!-- 调试选项 -->
+            <div class="multi_prefill_block">
+                <label class="checkbox_label">
+                    <input id="multi_prefill_log" type="checkbox" />
+                    <span>启用调试日志</span>
+                </label>
+                <small>在浏览器控制台中查看详细的匹配和注入信息</small>
+            </div>
+
+            <hr class="sysHR">
+
+            <!-- 说明 -->
+            <div class="multi_prefill_info">
                 <small>
                     <i class="fa-solid fa-info-circle"></i>
-                    此扩展为最后一条 assistant 消息添加 <code>prefix: true</code>，
-                    启用 DeepSeek 的 prefill 功能。仅在使用 Custom API 源连接 DeepSeek 兼容端点时需要。
+                    此扩展根据模型名称自动选择预填充属性：
+                    <ul>
+                        <li><b>DeepSeek</b>: 添加 <code>prefix: true</code></li>
+                        <li><b>Kimi/Moonshot</b>: 添加 <code>partial: true</code></li>
+                        <li><b>自定义</b>: 可配置任意属性名和值</li>
+                    </ul>
                 </small>
             </div>
         </div>
