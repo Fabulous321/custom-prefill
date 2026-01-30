@@ -1,4 +1,4 @@
-# Multi-Prefill 多模型预填充扩展
+# 自定义预填充 (Custom Prefill) 扩展
 
 这是一个 SillyTavern (酒馆) 扩展，为多种 LLM 模型自动添加预填充 (Prefill) 属性。
 
@@ -16,16 +16,6 @@
 | DeepSeek | `prefix: true` | `deepseek` |
 | Kimi (月之暗面) | `partial: true` | `kimi\|moonshot` |
 | 自定义 | 用户配置 | 用户配置 |
-
-## 🚀 安装方法
-
-将此文件夹复制到 SillyTavern 的第三方扩展目录：
-
-```
-SillyTavern/public/scripts/extensions/third-party/custom message/
-```
-
-或者使用其他目录名（需同步修改 `index.js` 中的 `EXTENSION_FOLDER_PATH`）。
 
 ## ⚙️ 配置说明
 
