@@ -25,6 +25,7 @@ const multiPrefill = {
 
     // Popup module references
     callGenericPopup: null,
+    Popup: null,
     POPUP_TYPE: null,
     POPUP_RESULT: null,
 
@@ -384,55 +385,75 @@ const multiPrefill = {
         const okButton = isEdit ? '保存' : '添加';
 
         // Use module reference or global fallback
-        const popupFn = this.callGenericPopup || window.callGenericPopup;
         const popupType = this.POPUP_TYPE || window.POPUP_TYPE;
         const popupResult = this.POPUP_RESULT || window.POPUP_RESULT;
+        const PopupClass = this.Popup || window.Popup;
 
-        if (!popupFn || !popupType || !popupResult) {
+        if (!PopupClass || !popupType || !popupResult) {
             toastr.error('弹窗模块未加载，请刷新页面重试');
             console.error('[multi-prefill] Popup module not loaded');
             return;
         }
 
-        popupFn(html, popupType.CONFIRM, title, {
+        // Store captured values
+        let capturedValues = null;
+
+        // Create popup with onClosing to capture values before DOM removal
+        const popup = new PopupClass(html, popupType.CONFIRM, '', {
             okButton: okButton,
             cancelButton: '取消',
             wide: false,
             large: false,
-        }).then((result) => {
-            if (result === popupResult.AFFIRMATIVE) {
-                const name = jQuery('#new_rule_name').val().trim();
-                const pattern = jQuery('#new_rule_pattern').val().trim();
-                const property = jQuery('#new_rule_property').val().trim();
-                const valueStr = jQuery('#new_rule_value').val();
-                const extraStr = jQuery('#new_rule_extra').val().trim();
-                const useVars = jQuery('#new_rule_use_vars').prop('checked');
+            onClosing: (popup) => {
+                // Only capture on affirmative result
+                if (popup.result === popupResult.AFFIRMATIVE) {
+                    // Capture all form values while DOM still exists
+                    capturedValues = {
+                        name: jQuery('#new_rule_name').val()?.trim() || '',
+                        pattern: jQuery('#new_rule_pattern').val()?.trim() || '',
+                        property: jQuery('#new_rule_property').val()?.trim() || '',
+                        valueStr: jQuery('#new_rule_value').val() || 'true',
+                        extraStr: jQuery('#new_rule_extra').val()?.trim() || '',
+                        useVars: jQuery('#new_rule_use_vars').prop('checked') || false
+                    };
 
-                if (!name || !pattern || !property) {
-                    toastr.error('请填写所有必填项');
-                    return;
+                    // Validate required fields
+                    if (!capturedValues.name || !capturedValues.pattern || !capturedValues.property) {
+                        toastr.error('请填写所有必填项');
+                        return false; // Prevent closing
+                    }
+
+                    // Validate JSON
+                    if (capturedValues.extraStr) {
+                        try {
+                            JSON.parse(capturedValues.extraStr);
+                        } catch (e) {
+                            toastr.error('额外属性 JSON 格式错误');
+                            return false; // Prevent closing
+                        }
+                    }
                 }
+                return true; // Allow closing
+            }
+        });
 
+        popup.show().then((result) => {
+            if (result === popupResult.AFFIRMATIVE && capturedValues) {
                 // Parse extra properties
                 let extraProperties = {};
-                if (extraStr) {
-                    try {
-                        extraProperties = JSON.parse(extraStr);
-                    } catch (e) {
-                        toastr.error('额外属性 JSON 格式错误');
-                        return;
-                    }
+                if (capturedValues.extraStr) {
+                    extraProperties = JSON.parse(capturedValues.extraStr);
                 }
 
                 const newRule = {
                     id: isEdit ? rule.id : ('custom_' + Date.now()),
-                    name: name,
+                    name: capturedValues.name,
                     enabled: isEdit ? rule.enabled : true,
-                    modelPattern: pattern,
-                    prefillProperty: property,
-                    prefillValue: valueStr === 'true',
+                    modelPattern: capturedValues.pattern,
+                    prefillProperty: capturedValues.property,
+                    prefillValue: capturedValues.valueStr === 'true',
                     extraProperties: extraProperties,
-                    useVariables: useVars,
+                    useVariables: capturedValues.useVars,
                     priority: rule.priority || 10
                 };
 
@@ -440,10 +461,10 @@ const multiPrefill = {
 
                 if (isEdit) {
                     rules[index] = newRule;
-                    toastr.success(`已更新 ${name} 规则`);
+                    toastr.success(`已更新 ${capturedValues.name} 规则`);
                 } else {
                     rules.push(newRule);
-                    toastr.success(`已添加 ${name} 规则`);
+                    toastr.success(`已添加 ${capturedValues.name} 规则`);
                 }
 
                 if (self.saveSettingsDebounced) self.saveSettingsDebounced();
@@ -586,6 +607,7 @@ const multiPrefill = {
         }).then(function (popupMod) {
             // Store popup module references
             self.callGenericPopup = popupMod.callGenericPopup;
+            self.Popup = popupMod.Popup;
             self.POPUP_TYPE = popupMod.POPUP_TYPE;
             self.POPUP_RESULT = popupMod.POPUP_RESULT;
 
