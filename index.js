@@ -23,6 +23,11 @@ const multiPrefill = {
     getChatCompletionModel: null,
     getContext: null,
 
+    // Popup module references
+    callGenericPopup: null,
+    POPUP_TYPE: null,
+    POPUP_RESULT: null,
+
     // Preset rules for known providers
     PRESET_RULES: [
         {
@@ -378,13 +383,24 @@ const multiPrefill = {
         const title = isEdit ? `编辑规则: ${rule.name}` : '添加自定义规则';
         const okButton = isEdit ? '保存' : '添加';
 
-        callGenericPopup(html, POPUP_TYPE.CONFIRM, title, {
+        // Use module reference or global fallback
+        const popupFn = this.callGenericPopup || window.callGenericPopup;
+        const popupType = this.POPUP_TYPE || window.POPUP_TYPE;
+        const popupResult = this.POPUP_RESULT || window.POPUP_RESULT;
+
+        if (!popupFn || !popupType || !popupResult) {
+            toastr.error('弹窗模块未加载，请刷新页面重试');
+            console.error('[multi-prefill] Popup module not loaded');
+            return;
+        }
+
+        popupFn(html, popupType.CONFIRM, title, {
             okButton: okButton,
             cancelButton: '取消',
             wide: false,
             large: false,
         }).then((result) => {
-            if (result === POPUP_RESULT.AFFIRMATIVE) {
+            if (result === popupResult.AFFIRMATIVE) {
                 const name = jQuery('#new_rule_name').val().trim();
                 const pattern = jQuery('#new_rule_pattern').val().trim();
                 const property = jQuery('#new_rule_property').val().trim();
@@ -565,15 +581,19 @@ const multiPrefill = {
             self.event_types = mod.event_types;
             self.getContext = mod.getContext;
 
-            // Try to get callGenericPopup for dialogs
-            if (typeof callGenericPopup === 'undefined') {
-                import('../../../popup.js').then(function (popupMod) {
-                    window.callGenericPopup = popupMod.callGenericPopup;
-                    window.POPUP_TYPE = popupMod.POPUP_TYPE;
-                    window.POPUP_RESULT = popupMod.POPUP_RESULT;
-                }).catch(function () {
-                    self.debugLog('Could not load popup module');
-                });
+            // Load popup module
+            return import('../../../popup.js');
+        }).then(function (popupMod) {
+            // Store popup module references
+            self.callGenericPopup = popupMod.callGenericPopup;
+            self.POPUP_TYPE = popupMod.POPUP_TYPE;
+            self.POPUP_RESULT = popupMod.POPUP_RESULT;
+
+            // Also set globals for compatibility
+            if (typeof window.callGenericPopup === 'undefined') {
+                window.callGenericPopup = popupMod.callGenericPopup;
+                window.POPUP_TYPE = popupMod.POPUP_TYPE;
+                window.POPUP_RESULT = popupMod.POPUP_RESULT;
             }
 
             return import('../../../openai.js');
