@@ -1,15 +1,14 @@
 /**
- * Multi-Model Prefill Extension for SillyTavern
+ * 自定义预填充扩展 for SillyTavern
  * 
- * This extension automatically adds prefill properties to the last assistant message
- * based on the model being used. Supports multiple providers with different prefill formats.
+ * 这是一个 SillyTavern (酒馆) 扩展，为多种 LLM 模型自动添加预填充 (Prefill) 属性。
  * 
  * @author Fabulous
  * @version 2.0.0
  */
 
 const multiPrefill = {
-    EXTENSION_NAME: "multi-prefill",
+    EXTENSION_NAME: "自定义预填充",
     EXTENSION_FOLDER_PATH: "scripts/extensions/third-party/custom%20message",
     DEBUG: true,
 
